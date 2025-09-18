@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aprendizaje rápido 1H NMR</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; }
+    header { padding: 12px 16px; border-bottom: 1px solid #ddd; display: flex; gap: 12px; align-items: center; }
+    nav a { margin-right: 12px; text-decoration: none; color: #0366d6; }
+    nav a.active { text-decoration: underline; }
+    main { padding: 16px; }
+    .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    input[type="text"] { padding: 8px; width: 360px; }
+    button { padding: 8px 12px; }
+    iframe { width: 100%; height: 78vh; border: 1px solid #ccc; border-radius: 6px; }
+    .hidden { display: none; }
+    footer { padding: 12px 16px; border-top: 1px solid #eee; color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>1H NMR</strong>
+    <nav>
+      <a href="#prediccion" id="link-predict">Predicción 1H</a>
+      <a href="#visor" id="link-viewer">Visor NMR</a>
+      <a href="#ayuda" id="link-help">Ayuda</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Predicción 1H con nmrDB -->
+    <section id="prediccion">
+      <h2>Predicción 1H (nmrDB)</h2>
+      <div class="row">
+        <form id="form-smiles">
+          <input id="smiles" type="text" value="c1ccccc1CC" placeholder="Introduce SMILES (p.ej., CCO)" />
+          <button type="submit">Actualizar</button>
+        </form>
+        <span id="status" style="color:#666;"></span>
+      </div>
+      <p>Este módulo usa el servicio HTML5 de nmrDB; cambia el SMILES y refresca el espectro de forma inmediata.</p>
+      <iframe id="nmrdb-frame" title="nmrdb-1h"></iframe>
+    </section>
+
+    <!-- NMRium embebido por iframe (no requiere instalación) -->
+    <section id="visor" class="hidden">
+      <h2>Visor NMR (NMRium)</h2>
+      <p>Arrastra y suelta archivos JCAMP (.dx/.jdx), carpetas Bruker comprimidas o archivos .nmrium para analizarlos.</p>
+      <iframe id="nmrium-frame" title="nmrium-viewer"></iframe>
+    </section>
+
+    <!-- Ayuda básica -->
+    <section id="ayuda" class="hidden">
+      <h2>Ayuda</h2>
+      <ul>
+        <li>Predicción: el iframe llama al servicio 1H de nmrDB con el parámetro smiles.</li>
+        <li>Visor: NMRium embebido permite cargar, asignar y exportar análisis sin instalación.</li>
+        <li>Consejo: usa SMILES válidos (ej. CCO, CC(=O)OCH3) y archivos JCAMP estándar.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    Fuente de predicción: nmrDB (HTML5 service). Visor: NMRium integrado vía iframe.
+  </footer>
+
+  <script>
+    // Enlaces simples de SPA basada en hash
+    const sections = {
+      prediccion: document.getElementById('prediccion'),
+      visor: document.getElementById('visor'),
+      ayuda: document.getElementById('ayuda'),
+    };
+    const links = {
+      prediccion: document.getElementById('link-predict'),
+      visor: document.getElementById('link-viewer'),
+      ayuda: document.getElementById('link-help'),
+    };
+
+    function setActive(hash) {
+      const key = (hash || '#prediccion').replace('#','');
+      Object.keys(sections).forEach(k => {
+        sections[k].classList.toggle('hidden', k !== key);
+        links[k].classList.toggle('active', k === key);
+      });
+    }
+
+    // Predicción nmrDB
+    const BASE = 'https://www.nmrdb.org/service.php?name=nmr-1h-prediction&smiles=';
+    const smilesInput = document.getElementById('smiles');
+    const nmrdbFrame = document.getElementById('nmrdb-frame');
+    const form = document.getElementById('form-smiles');
+    const status = document.getElementById('status');
+
+    function updatePredict() {
+      const smiles = smilesInput.value.trim();
+      if (!smiles) return;
+      const url = BASE + encodeURIComponent(smiles);
+      nmrdbFrame.src = url;
+      status.textContent = 'Cargando predicción…';
+      nmrdbFrame.onload = () => status.textContent = 'Listo';
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      updatePredict();
+    });
+
+    // NMRium iframe: se puede pasar un espectro de ejemplo por URL si se desea
+    const nmriumFrame = document.getElementById('nmrium-frame');
+    function loadNmrium() {
+      // Demo pública; permite drag & drop de datos locales del usuario
+      nmriumFrame.src = 'https://dev.nmrium.org';
+    }
+
+    window.addEventListener('hashchange', () => setActive(location.hash));
+    // Inicialización
+    setActive(location.hash || '#prediccion');
+    updatePredict();
+    loadNmrium();
+  </script>
+</body>
+</html>
